@@ -1,5 +1,14 @@
 .App {
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.File-uploader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: green;
 }
 
 .App-logo {
