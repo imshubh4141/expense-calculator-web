@@ -19,7 +19,7 @@ function FileUploader() {
         }
 
         const formData = new FormData();
-        formData.append('File', file);
+        formData.append('uploaded_file', file);
 
         try {
             const response = await axios.post('/upload', formData, {
@@ -36,8 +36,8 @@ function FileUploader() {
         <div className='File-uploader'>
             <form onSubmit={handleSubmit}>
                 <h4>Upload excel file</h4>
-                <input type="file" onChange={handleChange}/>
-                <button type='submit'>Calculate my expenses</button>
+                <input type="file" name="uploaded_file" onChange={handleChange}/>
+                <button type="submit">Calculate my expenses</button>
             </form>
         </div>
     );
