@@ -1,10 +1,10 @@
 export interface Categories{
-    travel?: number | undefined;
-    food?: number | undefined;
-    grocery?: number | undefined;
-    rent?: number | undefined;
-    maid?: number | undefined;
-    electricity?: number | undefined;
-    leisure?: number | undefined;
-    investments?: number | undefined;
+    travel: number;
+    food: number;
+    grocery: number;
+    rent: number;
+    maid: number;
+    electricity: number;
+    leisure: number;
+    investments: number;
 };

@@ -28,13 +28,49 @@ app.listen(port, () => {
     const workbook = xlsx_1.default.read(buf, { type: "buffer" });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     // console.log(worksheet);
-    const transactions = xlsx_1.default.utils.sheet_to_json(worksheet);
-    let categories = {};
+    let transactions = xlsx_1.default.utils.sheet_to_json(worksheet);
+    // console.log(transactions);
+    function validTransactionCheck(transaction) {
+        return (Object.keys(transaction).length === 6) && (transaction.Date !== undefined) && (transaction.Narration !== undefined) && (transaction['Chq./Ref.No.'] !== undefined) && (transaction['Value Dt'] !== undefined) && (transaction['Withdrawal Amt.'] !== undefined) && (transaction['Closing Balance'] !== undefined);
+    }
+    transactions = transactions.filter(transaction => validTransactionCheck(transaction));
+    let categories = {
+        travel: 0,
+        food: 0,
+        grocery: 0,
+        rent: 0,
+        maid: 0,
+        electricity: 0,
+        leisure: 0,
+        investments: 0,
+    };
     transactions.map(transaction => {
-        console.log(transaction.Date, transaction['Closing Balance']);
-        // console.log(transaction.Date, transaction.WithdrawalAmount);
+        // console.log(transaction);
+        const txnDate = transaction.Date;
+        const narration = transaction.Narration.toLowerCase();
+        const refNo = transaction['Chq./Ref.No.'];
+        const valueDate = transaction['Value Dt'];
+        const withdrawalAmount = transaction['Withdrawal Amt.'];
+        const closingBalance = transaction['Closing Balance'];
+        if (narration.includes('travel')) {
+            categories.travel += withdrawalAmount;
+        }
+        else if (!narration.includes('swiggystores') && (narration.includes('swiggy') || narration.includes('lunch') || narration.includes('breakfast') || narration.includes('snacks'))) {
+            categories.food += withdrawalAmount;
+        }
+        else if (narration.includes('swiggystores') || narration.includes('grocery')) {
+            categories.grocery += withdrawalAmount;
+        }
+        else if (narration.includes('rent')) {
+            categories.rent += withdrawalAmount;
+        }
+        else if (narration.includes('maid')) {
+            categories.maid += withdrawalAmount;
+        }
+        else {
+            categories.leisure += withdrawalAmount;
+        }
     });
     // console.log(jsonData);
-    // var aoa = xlsx.utils.sheet_to_json(worksheet, {header: 1});
-    // console.log(aoa);
+    console.log(categories);
 });
