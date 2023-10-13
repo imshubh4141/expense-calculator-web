@@ -17,22 +17,21 @@ app.get('/checkAlive', (req: Request, res: Response) => {
     res.send(`<h1>Alive on port ${port}</h1>`);
 });
 
+function addXLSExtenstion(name : string) : string {
+    const newName = name.split('.')[0] + '.xls';
+    return newName;
+}
 
 app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response) => {
     if(!req.file){
         return res.status(400).json({message: 'No file uploaded'});
     }
-    console.log('Recieved file: ' + req.file.filename);
+    console.log('Recieved file: ' + req.file.originalname);
+
+    const fileName = addXLSExtenstion(req.file.originalname);
 
     //parsing logic here
-    
-    res.status(200).json({message: 'file uploaded successfully'});
-});
-
-app.listen(port, () => {
-    console.log(`Listening on port ${port}`);
-
-    const buf = readFileSync('/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/september_expense.xls');
+    const buf = readFileSync(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${fileName}`);
     const workbook = xlsx.read(buf, {type: "buffer"});
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     // console.log(worksheet);
@@ -41,7 +40,15 @@ app.listen(port, () => {
     // console.log(transactions);
 
     function validTransactionCheck(transaction : Transaction) : boolean{
-        return (Object.keys(transaction).length === 6) && (transaction.Date !== undefined) && (transaction.Narration !== undefined) && (transaction['Chq./Ref.No.'] !== undefined) && (transaction['Value Dt'] !== undefined) && (transaction['Withdrawal Amt.'] !== undefined) && (transaction['Closing Balance'] !== undefined);
+        let temp : boolean = (Object.keys(transaction).length === 6) && (transaction.Date !== undefined) && (transaction.Narration !== undefined) && (transaction['Chq./Ref.No.'] !== undefined) && (transaction['Value Dt'] !== undefined) && (transaction['Withdrawal Amt.'] !== undefined || transaction['Deposit Amt.'] !== undefined) && (transaction['Closing Balance'] !== undefined);
+        if(!temp){
+            console.log(transaction);
+        }
+        return temp;
+    }
+
+    function isDebit(transaction : Transaction): boolean{
+        return transaction['Withdrawal Amt.'] !== undefined;
     }
 
     transactions = transactions.filter(transaction => validTransactionCheck(transaction));
@@ -55,37 +62,47 @@ app.listen(port, () => {
         electricity: 0,
         leisure: 0,
         investments: 0,
+        credits: 0,
     };
     
+    let debits = 0;
+
     transactions.map(transaction => {
         // console.log(transaction);
-        const txnDate = transaction.Date;
-        const narration = transaction.Narration.toLowerCase();
-        const refNo = transaction['Chq./Ref.No.'];
-        const valueDate = transaction['Value Dt'];
-        const withdrawalAmount = transaction['Withdrawal Amt.'];
-        const closingBalance = transaction['Closing Balance'];
+        if(isDebit(transaction)){
+            const txnDate = transaction.Date;
+            const narration = transaction.Narration.toLowerCase();
+            const refNo = transaction['Chq./Ref.No.'];
+            const valueDate = transaction['Value Dt'];
+            const withdrawalAmount = transaction['Withdrawal Amt.'];
+            const closingBalance = transaction['Closing Balance'];
 
-        if(narration.includes('travel')){
-            categories.travel += withdrawalAmount;
-        } else if(!narration.includes('swiggystores') && (narration.includes('swiggy') || narration.includes('lunch') || narration.includes('breakfast') || narration.includes('snacks'))){
-            categories.food += withdrawalAmount;
-        } else if(narration.includes('swiggystores') || narration.includes('grocery')){
-            categories.grocery += withdrawalAmount;
-        } else if(narration.includes('rent')){
-            categories.rent += withdrawalAmount;
-        } else if(narration.includes('maid')){
-            categories.maid += withdrawalAmount;
+            debits += withdrawalAmount;
+
+            if(narration.includes('travel')){
+                categories.travel += withdrawalAmount;
+            } else if(!narration.includes('swiggystores') && (narration.includes('swiggy') || narration.includes('lunch') || narration.includes('breakfast') || narration.includes('snacks'))){
+                categories.food += withdrawalAmount;
+            } else if(narration.includes('swiggystores') || narration.includes('grocery') || narration.includes('dmart')){            
+                categories.grocery += withdrawalAmount;
+            } else if(narration.includes('rent')){
+                categories.rent += withdrawalAmount;
+            } else if(narration.includes('maid')){
+                categories.maid += withdrawalAmount;
+            } else if(narration.includes('nseclearinglimited')){
+                categories.investments += withdrawalAmount;
+            } else {
+                categories.leisure += withdrawalAmount;
+            }
+
         } else {
-            categories.leisure += withdrawalAmount;
+            categories.credits += transaction['Deposit Amt.'];
         }
-
-        
-        
-
-        
     });
-    // console.log(jsonData);
     console.log(categories);
+    res.status(200).json({message: 'file uploaded successfully'});
+});
 
+app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
 });

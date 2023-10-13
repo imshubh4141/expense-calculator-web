@@ -7,4 +7,5 @@ export interface Categories{
     electricity: number;
     leisure: number;
     investments: number;
+    credits: number;
 };
