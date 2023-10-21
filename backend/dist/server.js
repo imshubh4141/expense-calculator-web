@@ -4,10 +4,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const path_1 = __importDefault(require("path"));
 const multer_1 = __importDefault(require("multer"));
 const xlsx_1 = __importDefault(require("xlsx"));
 const fs_1 = require("fs");
-const upload = (0, multer_1.default)({ dest: '../uploads' });
+const storage = multer_1.default.diskStorage({
+    destination: path_1.default.join('../uploads'),
+    filename: (req, file, cb) => {
+        const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const addXLSExtenstion = '.xls';
+        const fileName = uniqueSuffix + addXLSExtenstion;
+        cb(null, fileName);
+    },
+});
+const upload = (0, multer_1.default)({ storage: storage });
 console.log("Fantastic!!!");
 const app = (0, express_1.default)();
 const port = 3000;
@@ -22,15 +32,15 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
     }
-    console.log('Recieved file: ' + req.file.originalname);
-    const fileName = addXLSExtenstion(req.file.originalname);
+    console.log('Recieved file: ' + req.file.filename);
     //parsing logic here
-    const buf = (0, fs_1.readFileSync)(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${fileName}`);
+    const buf = (0, fs_1.readFileSync)(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${req.file.filename}`);
     const workbook = xlsx_1.default.read(buf, { type: "buffer" });
+    // console.log('Workbook: ' + workbook);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    // console.log(worksheet);
+    // console.log('worksheet: ' + worksheet);
     let transactions = xlsx_1.default.utils.sheet_to_json(worksheet);
-    // console.log(transactions);
+    // console.log('txns: ' + transactions);
     function validTransactionCheck(transaction) {
         let temp = (Object.keys(transaction).length === 6) && (transaction.Date !== undefined) && (transaction.Narration !== undefined) && (transaction['Chq./Ref.No.'] !== undefined) && (transaction['Value Dt'] !== undefined) && (transaction['Withdrawal Amt.'] !== undefined || transaction['Deposit Amt.'] !== undefined) && (transaction['Closing Balance'] !== undefined);
         if (!temp) {
@@ -91,7 +101,10 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => {
         }
     });
     console.log(categories);
-    res.status(200).json({ message: 'file uploaded successfully' });
+    res.status(200).send({
+        message: 'file uploaded successfully',
+        categories: categories,
+    });
 });
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);

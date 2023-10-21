@@ -5,6 +5,7 @@ import axios from 'axios';
 function FileUploader() {
 
     const [file, setFile] = useState<File | null>(null);
+    const [expenses, setExpenses] = useState(null);
 
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         const selectedFile = event.target.files?.[0]//safe way to access arrays
@@ -25,7 +26,7 @@ function FileUploader() {
             const response = await axios.post('/upload', formData, {
                 headers: {'Content-Type': 'multipart/form-data'},
             });
-            console.log(`Response from server: ${response.data}`);
+            console.log(`Response from server: ${response}`);
             
         } catch (error) {
             console.error('Error uploading file: ', error);
@@ -39,6 +40,9 @@ function FileUploader() {
                 <input type="file" name="uploaded_file" onChange={handleChange}/>
                 <button type="submit">Calculate my expenses</button>
             </form>
+            <div className='expense-container'>
+
+            </div>
         </div>
     );
 }
