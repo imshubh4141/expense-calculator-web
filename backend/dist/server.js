@@ -17,17 +17,21 @@ const storage = multer_1.default.diskStorage({
         cb(null, fileName);
     },
 });
-const upload = (0, multer_1.default)({ storage: storage });
-console.log("Fantastic!!!");
-const app = (0, express_1.default)();
-const port = 3000;
-app.get('/checkAlive', (req, res) => {
-    res.send(`<h1>Alive on port ${port}</h1>`);
-});
 function addXLSExtenstion(name) {
     const newName = name.split('.')[0] + '.xls';
     return newName;
 }
+const upload = (0, multer_1.default)({ storage: storage });
+console.log("Fantastic!!!");
+const app = (0, express_1.default)();
+const port = 3001;
+app.get('/checkAlive', (req, res) => {
+    console.log('check Alive');
+    return res.status(200).json({
+        message: 'I am alive',
+        port: port,
+    });
+});
 app.post('/upload', upload.single('uploaded_file'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
@@ -101,7 +105,7 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => {
         }
     });
     console.log(categories);
-    res.status(200).send({
+    res.status(200).json({
         message: 'file uploaded successfully',
         categories: categories,
     });

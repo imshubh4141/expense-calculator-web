@@ -11,27 +11,32 @@ const storage = multer.diskStorage({
     destination: path.join('../uploads'),
     filename: (req,file,cb)=>{
         const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const addXLSExtenstion = '.xls'
+        const addXLSExtenstion = '.xls';
         const fileName = uniqueSuffix + addXLSExtenstion;
         cb(null, fileName);
     },
 })
+
+function addXLSExtenstion(name : string) : string {
+    const newName = name.split('.')[0] + '.xls';
+    return newName;
+}
 
 const upload = multer({storage: storage});
 
 console.log("Fantastic!!!");
 
 const app = express();
-const port = 3000;
+const port = 3001;
 
 app.get('/checkAlive', (req: Request, res: Response) => {
-    res.send(`<h1>Alive on port ${port}</h1>`);
+    console.log('check Alive');
+    
+    return res.status(200).json({
+        message: 'I am alive',
+        port: port,
+    });
 });
-
-function addXLSExtenstion(name : string) : string {
-    const newName = name.split('.')[0] + '.xls';
-    return newName;
-}
 
 app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response) => {
     if(!req.file){
@@ -114,7 +119,7 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
     
     console.log(categories);
 
-    res.status(200).send({
+    res.status(200).json({
         message: 'file uploaded successfully',
         categories: categories,
     });

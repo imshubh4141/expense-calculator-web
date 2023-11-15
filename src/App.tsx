@@ -1,13 +1,19 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 import FileUploader from './components/FileUploader';
+import ErrorPage from './components/ErrorPage';
+import ApiCheckAlive from './components/ApiCheckAlive';
+import { BrowserRouter, Routes, Link, Route } from 'react-router-dom';
 
 function App() {
   return (
-    <div className="App">
-      <FileUploader></FileUploader>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<FileUploader/>}/>
+        <Route path="/checkAlive" element={<ApiCheckAlive/>}/>
+        <Route path="*" element={<ErrorPage/>}/>
+      </Routes>
+    </BrowserRouter>
   );
 }
 

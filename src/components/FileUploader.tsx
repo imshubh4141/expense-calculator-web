@@ -27,7 +27,7 @@ function FileUploader() {
                 headers: {'Content-Type': 'multipart/form-data'},
             });
             console.log(`Response from server: ${response}`);
-            
+
         } catch (error) {
             console.error('Error uploading file: ', error);
         }
