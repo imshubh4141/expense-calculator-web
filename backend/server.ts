@@ -36,6 +36,7 @@ app.get('/checkAlive', (req: Request, res: Response) => {
         message: 'I am alive',
         port: port,
     });
+    
 });
 
 app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response) => {

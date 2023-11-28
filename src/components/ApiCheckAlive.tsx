@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 import React, { useEffect, useState } from "react";
 
-interface ApiResponse {
+interface ApiResponse{
     message: string
     port: number
 }
@@ -11,14 +11,10 @@ const ApiCheckAlive = () => {
 
     useEffect(() => {
         let ignore = false;
-
         const fetchAPIData = async () => {
-            const res: ApiResponse = await axios.get('/checkAlive');
+            const res: any = await axios.get('/checkAlive');
             if(!ignore){
-                setResponse(res);
-                console.log(res);
-                
-                console.log(response);
+                setResponse(res.data);
             }
         }
 
@@ -31,7 +27,9 @@ const ApiCheckAlive = () => {
 
     return (
         <>
-            <h2>checkAlive</h2>
+            {response !== null && (
+                <h4>{JSON.stringify(response)}</h4>
+            )}
         </>
     )
 }
