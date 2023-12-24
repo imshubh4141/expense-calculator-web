@@ -2,24 +2,18 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import multer from 'multer';
 import xlsx from 'xlsx';
-import { readFileSync } from "fs";
+import { readFileSync, unlink } from "fs";
 import { Categories } from './interfaces/Categories';
 import { Transaction } from './interfaces/Transaction';
 import { log } from 'console';
 
-const storage = multer.diskStorage({
-    destination: path.join('../uploads'),
-    filename: (req,file,cb)=>{
-        const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const addXLSExtenstion = '.xls';
-        const fileName = uniqueSuffix + addXLSExtenstion;
-        cb(null, fileName);
-    },
-})
-
 function addXLSExtenstion(name : string) : string {
     const newName = name.split('.')[0] + '.xls';
     return newName;
+}
+
+function isDebit(transaction : Transaction): boolean{
+    return transaction['Withdrawal Amt.'] !== undefined;
 }
 
 function validTransactionCheck(transaction : Transaction) : boolean{
@@ -30,6 +24,15 @@ function validTransactionCheck(transaction : Transaction) : boolean{
     }
     return temp;
 }
+
+const storage = multer.diskStorage({
+    destination: 'uploads',
+    filename: (req,file,cb)=>{
+        const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const fileName = uniqueSuffix + '.xls';
+        cb(null, fileName);
+    },
+});
 
 const upload = multer({storage: storage});
 
@@ -53,17 +56,20 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
     console.log('Recieved file: ' + req.file.filename);
 
     //parsing logic here
-    const buf = readFileSync(path.join(__dirname, 'uploads', req.file.filename));
-    
+    // const buf = readFileSync(path.join(__dirname, 'uploads', req.file.filename));
+    const buf = readFileSync(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${req.file.filename}`);
+
     const workbook = xlsx.read(buf, {type: "buffer"});
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     let transactions : Transaction[] = xlsx.utils.sheet_to_json(worksheet);
 
-    function isDebit(transaction : Transaction): boolean{
-        return transaction['Withdrawal Amt.'] !== undefined;
-    }
-
     transactions = transactions.filter(transaction => validTransactionCheck(transaction));
+
+    //delete the file from the server after storing txns in a buffer
+    unlink(path.join(__dirname, 'uploads', req.file.filename), (err) => {
+        if (err) throw err;
+        console.log('successfully deleted ' + req.file?.filename);
+    });
 
     let categories : Categories = {
         travel: 0,
