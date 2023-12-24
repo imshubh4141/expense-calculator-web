@@ -21,8 +21,15 @@ function addXLSExtenstion(name) {
     const newName = name.split('.')[0] + '.xls';
     return newName;
 }
+function validTransactionCheck(transaction) {
+    let temp = (Object.keys(transaction).length === 6) && (transaction.Date !== undefined) && (transaction.Narration !== undefined) && (transaction['Chq./Ref.No.'] !== undefined) && (transaction['Value Dt'] !== undefined) && (transaction['Withdrawal Amt.'] !== undefined || transaction['Deposit Amt.'] !== undefined) && (transaction['Closing Balance'] !== undefined);
+    //if not valid then print
+    if (!temp) {
+        console.log(transaction);
+    }
+    return temp;
+}
 const upload = (0, multer_1.default)({ storage: storage });
-console.log("Fantastic!!!");
 const app = (0, express_1.default)();
 const port = 3001;
 app.get('/checkAlive', (req, res) => {
@@ -38,6 +45,7 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => {
     }
     console.log('Recieved file: ' + req.file.filename);
     //parsing logic here
+    const dir = __dirname;
     const buf = (0, fs_1.readFileSync)(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${req.file.filename}`);
     const workbook = xlsx_1.default.read(buf, { type: "buffer" });
     // console.log('Workbook: ' + workbook);
@@ -45,13 +53,6 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => {
     // console.log('worksheet: ' + worksheet);
     let transactions = xlsx_1.default.utils.sheet_to_json(worksheet);
     // console.log('txns: ' + transactions);
-    function validTransactionCheck(transaction) {
-        let temp = (Object.keys(transaction).length === 6) && (transaction.Date !== undefined) && (transaction.Narration !== undefined) && (transaction['Chq./Ref.No.'] !== undefined) && (transaction['Value Dt'] !== undefined) && (transaction['Withdrawal Amt.'] !== undefined || transaction['Deposit Amt.'] !== undefined) && (transaction['Closing Balance'] !== undefined);
-        if (!temp) {
-            console.log(transaction);
-        }
-        return temp;
-    }
     function isDebit(transaction) {
         return transaction['Withdrawal Amt.'] !== undefined;
     }
@@ -112,4 +113,5 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => {
 });
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);
+    console.log(__dirname);
 });

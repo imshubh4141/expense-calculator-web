@@ -24,3 +24,4 @@ yarn-error.log*
 
 #files
 backend/uploads
+backend/dist
