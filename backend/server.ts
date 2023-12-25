@@ -81,6 +81,7 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
         leisure: 0,
         investments: 0,
         credits: 0,
+        
     };
     
     let debits = 0;
