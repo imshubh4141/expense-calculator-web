@@ -6,6 +6,7 @@ import { readFileSync, unlink } from "fs";
 import { Categories } from './interfaces/Categories';
 import { Transaction } from './interfaces/Transaction';
 import { log } from 'console';
+import { Client } from 'pg';
 
 function addXLSExtenstion(name : string) : string {
     const newName = name.split('.')[0] + '.xls';
@@ -81,7 +82,6 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
         leisure: 0,
         investments: 0,
         credits: 0,
-        
     };
     
     let debits = 0;
@@ -129,5 +129,35 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
 
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);
-    
+
+    const client = new Client({
+        user: 'postgres',
+        host: 'localhost',
+        database: 'postgres',
+        password: '4141',
+        port: 5432,
+    });
+
+    async function connectdb() {
+        try{
+            await client.connect();
+            console.log('connected to db...');
+        } catch(err){
+            console.error(err);
+        }
+    }
+
+    async function readfromdb(){
+        try{
+            // const res = await client.query('select now()');
+            const res = await client.query('select * from expense_categories');
+            console.log('read query res: ' + JSON.stringify(res.rows, null, 2));
+            await client.end();
+        } catch(err) {
+            console.error(err);
+        }
+    }
+
+    connectdb();
+    readfromdb();
 });

@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -8,18 +17,13 @@ const path_1 = __importDefault(require("path"));
 const multer_1 = __importDefault(require("multer"));
 const xlsx_1 = __importDefault(require("xlsx"));
 const fs_1 = require("fs");
-const storage = multer_1.default.diskStorage({
-    destination: path_1.default.join('../uploads'),
-    filename: (req, file, cb) => {
-        const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const addXLSExtenstion = '.xls';
-        const fileName = uniqueSuffix + addXLSExtenstion;
-        cb(null, fileName);
-    },
-});
+const pg_1 = require("pg");
 function addXLSExtenstion(name) {
     const newName = name.split('.')[0] + '.xls';
     return newName;
+}
+function isDebit(transaction) {
+    return transaction['Withdrawal Amt.'] !== undefined;
 }
 function validTransactionCheck(transaction) {
     let temp = (Object.keys(transaction).length === 6) && (transaction.Date !== undefined) && (transaction.Narration !== undefined) && (transaction['Chq./Ref.No.'] !== undefined) && (transaction['Value Dt'] !== undefined) && (transaction['Withdrawal Amt.'] !== undefined || transaction['Deposit Amt.'] !== undefined) && (transaction['Closing Balance'] !== undefined);
@@ -29,6 +33,14 @@ function validTransactionCheck(transaction) {
     }
     return temp;
 }
+const storage = multer_1.default.diskStorage({
+    destination: 'uploads',
+    filename: (req, file, cb) => {
+        const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const fileName = uniqueSuffix + '.xls';
+        cb(null, fileName);
+    },
+});
 const upload = (0, multer_1.default)({ storage: storage });
 const app = (0, express_1.default)();
 const port = 3001;
@@ -45,18 +57,19 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => {
     }
     console.log('Recieved file: ' + req.file.filename);
     //parsing logic here
-    const dir = __dirname;
+    // const buf = readFileSync(path.join(__dirname, 'uploads', req.file.filename));
     const buf = (0, fs_1.readFileSync)(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${req.file.filename}`);
     const workbook = xlsx_1.default.read(buf, { type: "buffer" });
-    // console.log('Workbook: ' + workbook);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    // console.log('worksheet: ' + worksheet);
     let transactions = xlsx_1.default.utils.sheet_to_json(worksheet);
-    // console.log('txns: ' + transactions);
-    function isDebit(transaction) {
-        return transaction['Withdrawal Amt.'] !== undefined;
-    }
     transactions = transactions.filter(transaction => validTransactionCheck(transaction));
+    //delete the file from the server after storing txns in a buffer
+    (0, fs_1.unlink)(path_1.default.join(__dirname, 'uploads', req.file.filename), (err) => {
+        var _a;
+        if (err)
+            throw err;
+        console.log('successfully deleted ' + ((_a = req.file) === null || _a === void 0 ? void 0 : _a.filename));
+    });
     let categories = {
         travel: 0,
         food: 0,
@@ -113,5 +126,37 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => {
 });
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);
-    console.log(__dirname);
+    const client = new pg_1.Client({
+        user: 'postgres',
+        host: 'localhost',
+        database: 'postgres',
+        password: '4141',
+        port: 5432,
+    });
+    function connectdb() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield client.connect();
+                console.log('connected to db...');
+            }
+            catch (err) {
+                console.error(err);
+            }
+        });
+    }
+    function readfromdb() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                // const res = await client.query('select now()');
+                const res = yield client.query('select * from expense_categories');
+                console.log('read query res: ' + JSON.stringify(res.rows, null, 2));
+                yield client.end();
+            }
+            catch (err) {
+                console.error(err);
+            }
+        });
+    }
+    connectdb();
+    readfromdb();
 });
