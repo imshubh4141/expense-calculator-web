@@ -1,4 +1,4 @@
-export interface Categories{
+export interface Expense{
     travel: number;
     food: number;
     grocery: number;

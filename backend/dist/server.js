@@ -129,7 +129,7 @@ app.listen(port, () => {
     const client = new pg_1.Client({
         user: 'postgres',
         host: 'localhost',
-        database: 'postgres',
+        database: 'expense',
         password: '4141',
         port: 5432,
     });
@@ -148,7 +148,7 @@ app.listen(port, () => {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 // const res = await client.query('select now()');
-                const res = yield client.query('select * from expense_categories');
+                const res = yield client.query('select * from category_wise_expense');
                 console.log('read query res: ' + JSON.stringify(res.rows, null, 2));
                 yield client.end();
             }

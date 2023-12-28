@@ -3,17 +3,16 @@ import path from 'path';
 import multer from 'multer';
 import xlsx from 'xlsx';
 import { readFileSync, unlink } from "fs";
-import { Categories } from './interfaces/Categories';
+import { Expense } from './interfaces/Expense';
 import { Transaction } from './interfaces/Transaction';
 import { log } from 'console';
-import { Client } from 'pg';
 
 function addXLSExtenstion(name : string) : string {
     const newName = name.split('.')[0] + '.xls';
     return newName;
 }
 
-function isDebit(transaction : Transaction): boolean{
+function isDebit(transaction : Transaction): boolean {
     return transaction['Withdrawal Amt.'] !== undefined;
 }
 
@@ -72,7 +71,7 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
         console.log('successfully deleted ' + req.file?.filename);
     });
 
-    let categories : Categories = {
+    let expense : Expense = {
         travel: 0,
         food: 0,
         grocery: 0,
@@ -99,65 +98,34 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
             debits += withdrawalAmount;
 
             if(narration.includes('travel')){
-                categories.travel += withdrawalAmount;
+                expense.travel += withdrawalAmount;
             } else if(!narration.includes('swiggystores') && (narration.includes('swiggy') || narration.includes('lunch') || narration.includes('breakfast') || narration.includes('snacks'))){
-                categories.food += withdrawalAmount;
+                expense.food += withdrawalAmount;
             } else if(narration.includes('swiggystores') || narration.includes('grocery') || narration.includes('dmart')){            
-                categories.grocery += withdrawalAmount;
+                expense.grocery += withdrawalAmount;
             } else if(narration.includes('rent')){
-                categories.rent += withdrawalAmount;
+                expense.rent += withdrawalAmount;
             } else if(narration.includes('maid')){
-                categories.maid += withdrawalAmount;
+                expense.maid += withdrawalAmount;
             } else if(narration.includes('nseclearinglimited')){
-                categories.investments += withdrawalAmount;
+                expense.investments += withdrawalAmount;
             } else {
-                categories.leisure += withdrawalAmount;
+                expense.leisure += withdrawalAmount;
             }
 
         } else {
-            categories.credits += transaction['Deposit Amt.'];
+            expense.credits += transaction['Deposit Amt.'];
         }
     });
     
-    console.log(categories);
+    console.log(expense);
 
     res.status(200).json({
         message: 'file uploaded successfully',
-        categories: categories,
+        expense: expense,
     });
 });
 
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);
-
-    const client = new Client({
-        user: 'postgres',
-        host: 'localhost',
-        database: 'postgres',
-        password: '4141',
-        port: 5432,
-    });
-
-    async function connectdb() {
-        try{
-            await client.connect();
-            console.log('connected to db...');
-        } catch(err){
-            console.error(err);
-        }
-    }
-
-    async function readfromdb(){
-        try{
-            // const res = await client.query('select now()');
-            const res = await client.query('select * from expense_categories');
-            console.log('read query res: ' + JSON.stringify(res.rows, null, 2));
-            await client.end();
-        } catch(err) {
-            console.error(err);
-        }
-    }
-
-    connectdb();
-    readfromdb();
 });
