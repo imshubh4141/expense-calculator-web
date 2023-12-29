@@ -6,6 +6,7 @@ import { readFileSync, unlink } from "fs";
 import { Expense } from './interfaces/Expense';
 import { Transaction } from './interfaces/Transaction';
 import { log } from 'console';
+import { DatabaseManager } from './database/DatabaseManager';
 
 function addXLSExtenstion(name : string) : string {
     const newName = name.split('.')[0] + '.xls';
@@ -19,9 +20,9 @@ function isDebit(transaction : Transaction): boolean {
 function validTransactionCheck(transaction : Transaction) : boolean{
     let temp : boolean = (Object.keys(transaction).length === 6) && (transaction.Date !== undefined) && (transaction.Narration !== undefined) && (transaction['Chq./Ref.No.'] !== undefined) && (transaction['Value Dt'] !== undefined) && (transaction['Withdrawal Amt.'] !== undefined || transaction['Deposit Amt.'] !== undefined) && (transaction['Closing Balance'] !== undefined);
     //if not valid then print
-    if(!temp){
-        console.log(transaction);
-    }
+    // if(!temp){
+    //     console.log(transaction);
+    // }
     return temp;
 }
 
@@ -48,7 +49,7 @@ app.get('/checkAlive', (req: Request, res: Response) => {
     });
 });
 
-app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response) => {
+app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Response) => {
     if(!req.file){
         return res.status(400).json({message: 'No file uploaded'});
     }
@@ -56,8 +57,8 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
     console.log('Recieved file: ' + req.file.filename);
 
     //parsing logic here
-    // const buf = readFileSync(path.join(__dirname, 'uploads', req.file.filename));
-    const buf = readFileSync(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${req.file.filename}`);
+    const buf = readFileSync(path.join(__dirname, 'uploads', req.file.filename));
+    // const buf = readFileSync(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${req.file.filename}`);
 
     const workbook = xlsx.read(buf, {type: "buffer"});
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -76,7 +77,7 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
         food: 0,
         grocery: 0,
         rent: 0,
-        maid: 0,
+        house_help: 0,
         electricity: 0,
         leisure: 0,
         investments: 0,
@@ -106,7 +107,7 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
             } else if(narration.includes('rent')){
                 expense.rent += withdrawalAmount;
             } else if(narration.includes('maid')){
-                expense.maid += withdrawalAmount;
+                expense.house_help += withdrawalAmount;
             } else if(narration.includes('nseclearinglimited')){
                 expense.investments += withdrawalAmount;
             } else {
@@ -120,6 +121,15 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
     
     console.log(expense);
 
+    //save to db
+    try{
+        const dbManager: DatabaseManager = new DatabaseManager('postgres', 'localhost', 'expense', '4141', 5432);
+        await dbManager.insertExpense(expense);
+    } catch(err) {
+        console.error('insertion error: ' + err);
+    }
+    
+
     res.status(200).json({
         message: 'file uploaded successfully',
         expense: expense,
@@ -127,5 +137,13 @@ app.post('/upload', upload.single('uploaded_file'), (req: Request, res: Response
 });
 
 app.listen(port, () => {
+    
     console.log(`Listening on port ${port}`);
 });
+
+
+    //     user: 'postgres',
+    //     host: 'localhost',
+    //     database: 'expense',
+    //     password: '4141',
+    //     port: 5432,

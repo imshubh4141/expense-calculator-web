@@ -1,5 +1,6 @@
 import { Client } from 'pg';
 import { Expense } from '../interfaces/Expense';
+import exp from 'constants';
 
 export class DatabaseManager {
 
@@ -52,10 +53,30 @@ export class DatabaseManager {
             password: this.password,
             port: this.port,
         });
+
+        this.connect();
     }
 
-    insertExpense(expense: Expense){
+    private async connect() {
+        try{
+            await this.client.connect();
+            console.log('connected to db');
+        } catch(err) {
+            console.error('Error connecting to db: ', err);
+        }
+    }
 
+    async insertExpense(expense: Expense){
+        const query = 'INSERT INTO CATEGORY_WISE_EXPENSE(expense_month, travel, food, grocery, rent, house_help, electricity, leisure, investments,credits) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *';
+
+        let values = [expense.month, expense.travel, expense.food, expense.grocery, expense.rent, expense.house_help, expense.electricity, expense.leisure, expense.investments, expense.credits];
+
+        try{
+            const res = await this.client.query(query, values);
+            console.log(JSON.stringify(res.rows, null, 2));
+        } catch(err){
+            console.error(err);
+        }
     }
 
     deleteExpense(expense_id: number){
@@ -67,7 +88,7 @@ export class DatabaseManager {
     }
 
     updateExpense(expense_id: number, expense: Expense){
-        
+
     }
 
 }

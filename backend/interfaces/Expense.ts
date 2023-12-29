@@ -3,9 +3,10 @@ export interface Expense{
     food: number;
     grocery: number;
     rent: number;
-    maid: number;
+    house_help: number;
     electricity: number;
     leisure: number;
     investments: number;
     credits: number;
+    month?: string;
 };

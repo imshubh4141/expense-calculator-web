@@ -17,7 +17,7 @@ const path_1 = __importDefault(require("path"));
 const multer_1 = __importDefault(require("multer"));
 const xlsx_1 = __importDefault(require("xlsx"));
 const fs_1 = require("fs");
-const pg_1 = require("pg");
+const DatabaseManager_1 = require("./database/DatabaseManager");
 function addXLSExtenstion(name) {
     const newName = name.split('.')[0] + '.xls';
     return newName;
@@ -28,9 +28,9 @@ function isDebit(transaction) {
 function validTransactionCheck(transaction) {
     let temp = (Object.keys(transaction).length === 6) && (transaction.Date !== undefined) && (transaction.Narration !== undefined) && (transaction['Chq./Ref.No.'] !== undefined) && (transaction['Value Dt'] !== undefined) && (transaction['Withdrawal Amt.'] !== undefined || transaction['Deposit Amt.'] !== undefined) && (transaction['Closing Balance'] !== undefined);
     //if not valid then print
-    if (!temp) {
-        console.log(transaction);
-    }
+    // if(!temp){
+    //     console.log(transaction);
+    // }
     return temp;
 }
 const storage = multer_1.default.diskStorage({
@@ -51,14 +51,14 @@ app.get('/checkAlive', (req, res) => {
         port: port,
     });
 });
-app.post('/upload', upload.single('uploaded_file'), (req, res) => {
+app.post('/upload', upload.single('uploaded_file'), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
     }
     console.log('Recieved file: ' + req.file.filename);
     //parsing logic here
-    // const buf = readFileSync(path.join(__dirname, 'uploads', req.file.filename));
-    const buf = (0, fs_1.readFileSync)(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${req.file.filename}`);
+    const buf = (0, fs_1.readFileSync)(path_1.default.join(__dirname, 'uploads', req.file.filename));
+    // const buf = readFileSync(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${req.file.filename}`);
     const workbook = xlsx_1.default.read(buf, { type: "buffer" });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     let transactions = xlsx_1.default.utils.sheet_to_json(worksheet);
@@ -70,12 +70,12 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => {
             throw err;
         console.log('successfully deleted ' + ((_a = req.file) === null || _a === void 0 ? void 0 : _a.filename));
     });
-    let categories = {
+    let expense = {
         travel: 0,
         food: 0,
         grocery: 0,
         rent: 0,
-        maid: 0,
+        house_help: 0,
         electricity: 0,
         leisure: 0,
         investments: 0,
@@ -93,70 +93,50 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => {
             const closingBalance = transaction['Closing Balance'];
             debits += withdrawalAmount;
             if (narration.includes('travel')) {
-                categories.travel += withdrawalAmount;
+                expense.travel += withdrawalAmount;
             }
             else if (!narration.includes('swiggystores') && (narration.includes('swiggy') || narration.includes('lunch') || narration.includes('breakfast') || narration.includes('snacks'))) {
-                categories.food += withdrawalAmount;
+                expense.food += withdrawalAmount;
             }
             else if (narration.includes('swiggystores') || narration.includes('grocery') || narration.includes('dmart')) {
-                categories.grocery += withdrawalAmount;
+                expense.grocery += withdrawalAmount;
             }
             else if (narration.includes('rent')) {
-                categories.rent += withdrawalAmount;
+                expense.rent += withdrawalAmount;
             }
             else if (narration.includes('maid')) {
-                categories.maid += withdrawalAmount;
+                expense.house_help += withdrawalAmount;
             }
             else if (narration.includes('nseclearinglimited')) {
-                categories.investments += withdrawalAmount;
+                expense.investments += withdrawalAmount;
             }
             else {
-                categories.leisure += withdrawalAmount;
+                expense.leisure += withdrawalAmount;
             }
         }
         else {
-            categories.credits += transaction['Deposit Amt.'];
+            expense.credits += transaction['Deposit Amt.'];
         }
     });
-    console.log(categories);
+    console.log(expense);
+    //save to db
+    try {
+        const dbManager = new DatabaseManager_1.DatabaseManager('postgres', 'localhost', 'expense', '4141', 5432);
+        yield dbManager.insertExpense(expense);
+    }
+    catch (err) {
+        console.error('insertion error: ' + err);
+    }
     res.status(200).json({
         message: 'file uploaded successfully',
-        categories: categories,
+        expense: expense,
     });
-});
+}));
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);
-    const client = new pg_1.Client({
-        user: 'postgres',
-        host: 'localhost',
-        database: 'expense',
-        password: '4141',
-        port: 5432,
-    });
-    function connectdb() {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield client.connect();
-                console.log('connected to db...');
-            }
-            catch (err) {
-                console.error(err);
-            }
-        });
-    }
-    function readfromdb() {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                // const res = await client.query('select now()');
-                const res = yield client.query('select * from category_wise_expense');
-                console.log('read query res: ' + JSON.stringify(res.rows, null, 2));
-                yield client.end();
-            }
-            catch (err) {
-                console.error(err);
-            }
-        });
-    }
-    connectdb();
-    readfromdb();
 });
+//     user: 'postgres',
+//     host: 'localhost',
+//     database: 'expense',
+//     password: '4141',
+//     port: 5432,
