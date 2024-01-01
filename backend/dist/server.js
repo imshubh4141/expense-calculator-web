@@ -80,6 +80,7 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => __awaiter(void
         leisure: 0,
         investments: 0,
         credits: 0,
+        month: '',
     };
     let debits = 0;
     transactions.map(transaction => {
@@ -125,7 +126,7 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => __awaiter(void
         yield dbManager.insertExpense(expense);
     }
     catch (err) {
-        console.error('insertion error: ' + err);
+        console.error('save error: ' + err);
     }
     res.status(200).json({
         message: 'file uploaded successfully',

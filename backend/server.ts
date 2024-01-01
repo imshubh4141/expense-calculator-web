@@ -82,6 +82,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
         leisure: 0,
         investments: 0,
         credits: 0,
+        month: '',
     };
     
     let debits = 0;
@@ -126,10 +127,9 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
         const dbManager: DatabaseManager = new DatabaseManager('postgres', 'localhost', 'expense', '4141', 5432);
         await dbManager.insertExpense(expense);
     } catch(err) {
-        console.error('insertion error: ' + err);
+        console.error('save error: ' + err);
     }
     
-
     res.status(200).json({
         message: 'file uploaded successfully',
         expense: expense,
