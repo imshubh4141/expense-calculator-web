@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
@@ -9,7 +9,7 @@ import axios from 'axios';
 
 interface ExpenseInterface {
     category: string
-    amount: number
+    data: number | string
 }
 
 type expenseType = ExpenseInterface;
@@ -18,6 +18,11 @@ function FileUploader() {
 
     const [file, setFile] = useState<File | null>(null);
     const [expenses, setExpenses] = useState<expenseType | null>(null);
+
+    useEffect(() => {
+        console.log('state:' + expenses);
+    
+    },[expenses]);
 
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         const selectedFile = event.target.files?.[0]//safe way to access arrays
@@ -35,11 +40,11 @@ function FileUploader() {
         formData.append('uploaded_file', file);
 
         try {
-            const response:any = await axios.post('/upload', formData, {
+            const response: any = await axios.post('/upload', formData, {
                 headers: {'Content-Type': 'multipart/form-data'},
             });
-            setExpenses(response.data.categories);
-            console.log(response.data.categories);
+            setExpenses(response.data.expense);
+            // console.log(response.data.categories);
 
         } catch (error) {
             console.error('Error uploading file: ', error);
@@ -68,20 +73,20 @@ function FileUploader() {
                     {expenses !== null && (
                         <div className='expense-response mt-4 mx-4 d-flex justify-content-center'>
                             <Table striped bordered>
-                            <thead>
-                                <tr>
-                                    <th>Category</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {Object.entries(expenses).map(([category, amount]) => (
-                                <tr key={category}>
-                                    <td>{category}</td>
-                                    <td>{amount}</td>
-                                </tr>
-                                ))}
-                            </tbody>
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Object.entries(expenses).map(([category, data]) => (   
+                                        <tr key={category}>
+                                            <td>{category}</td>
+                                            <td>{data ?? 'null'}</td>
+                                        </tr>
+                                    ))} 
+                                </tbody>
                             </Table>
                         </div>
                     )}

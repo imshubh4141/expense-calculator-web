@@ -137,7 +137,6 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
 });
 
 app.listen(port, () => {
-    
     console.log(`Listening on port ${port}`);
 });
 
