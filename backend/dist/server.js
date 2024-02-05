@@ -123,8 +123,7 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => __awaiter(void
     //save to db
     try {
         const dbManager = new DatabaseManager_1.DatabaseManager('postgres', 'localhost', 'expense', '4141', 5432);
-        // await dbManager.insertExpense(expense);
-        yield dbManager.deleteExpense('December', '2023');
+        yield dbManager.insertExpense(expense);
     }
     catch (err) {
         console.error('save error: ' + err);
