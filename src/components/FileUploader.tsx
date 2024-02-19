@@ -38,8 +38,8 @@ function FileUploader() {
             const response:any = await axios.post('/upload', formData, {
                 headers: {'Content-Type': 'multipart/form-data'},
             });
-            setExpenses(response.data.categories);
-            console.log(response.data.categories);
+            setExpenses(response.data.expense);
+            console.log(response.data.expense);
 
         } catch (error) {
             console.error('Error uploading file: ', error);

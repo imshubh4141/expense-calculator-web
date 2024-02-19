@@ -73,7 +73,7 @@ export class DatabaseManager {
 
         try{
             const res = await this.client.query(query, values);
-            console.log(JSON.stringify(res.rows, null, 2));
+            console.log('database entry: ' + JSON.stringify(res.rows, null, 2));
         } catch(err){
             console.error(err);
         }
