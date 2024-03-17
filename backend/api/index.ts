@@ -3,10 +3,10 @@ import path from 'path';
 import multer from 'multer';
 import xlsx from 'xlsx';
 import { readFileSync, unlink } from "fs";
-import { Expense } from './interfaces/Expense';
-import { Transaction } from './interfaces/Transaction';
+import { Expense } from '../interfaces/Expense';
+import { Transaction } from '../interfaces/Transaction';
 import { log } from 'console';
-import { DatabaseManager } from './database/DatabaseManager';
+import { DatabaseManager } from '../database/DatabaseManager';
 
 function addXLSExtenstion(name : string) : string {
     const newName = name.split('.')[0] + '.xls';
@@ -20,14 +20,14 @@ function isDebit(transaction : Transaction): boolean {
 function validTransactionCheck(transaction : Transaction) : boolean{
     let temp : boolean = (Object.keys(transaction).length === 6) && (transaction.Date !== undefined) && (transaction.Narration !== undefined) && (transaction['Chq./Ref.No.'] !== undefined) && (transaction['Value Dt'] !== undefined) && (transaction['Withdrawal Amt.'] !== undefined || transaction['Deposit Amt.'] !== undefined) && (transaction['Closing Balance'] !== undefined);
     //if not valid then print
-    // if(!temp){
-    //     console.log(transaction);
-    // }
+    if(!temp){
+        console.log(transaction);
+    }
     return temp;
 }
 
 const storage = multer.diskStorage({
-    destination: 'uploads',
+    destination: 'uploads/tmp',
     filename: (req,file,cb)=>{
         const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
         const fileName = uniqueSuffix + '.xls';
@@ -36,6 +36,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({storage: storage});
+const month = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const app = express();
 const port = 3001;
@@ -57,8 +58,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     console.log('Recieved file: ' + req.file.filename);
 
     //parsing logic here
-    const buf = readFileSync(path.join(__dirname, 'uploads', req.file.filename));
-    // const buf = readFileSync(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${req.file.filename}`);
+    const buf = readFileSync(path.join(__dirname, 'uploads/tmp', req.file.filename));
 
     const workbook = xlsx.read(buf, {type: "buffer"});
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -67,7 +67,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     transactions = transactions.filter(transaction => validTransactionCheck(transaction));
 
     //delete the file from the server after storing txns in a buffer
-    unlink(path.join(__dirname, 'uploads', req.file.filename), (err) => {
+    unlink(path.join(__dirname, 'uploads/tmp', req.file.filename), (err) => {
         if (err) throw err;
         console.log('successfully deleted ' + req.file?.filename);
     });
@@ -82,7 +82,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
         leisure: 0,
         investments: 0,
         credits: 0,
-        month: '',
+        month: month[(new Date().getMonth() - 1) == -1 ? 11 : (new Date().getMonth() - 1)],
     };
     
     let debits = 0;
@@ -130,6 +130,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
         console.error('save error: ' + err);
     }
     
+    res.setHeader('Cache-Control', 's-max-age=1, stale-while-revalidate');
     res.status(200).json({
         message: 'file uploaded successfully',
         expense: expense,
@@ -139,6 +140,9 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);
 });
+
+module.exports = app;
+
 
 
     //     user: 'postgres',

@@ -4,12 +4,40 @@ import exp from 'constants';
 
 export class DatabaseManager {
 
+    // const client = new Client({
+    //     user: 'postgres',
+    //     host: 'localhost',
+    //     database: 'expense',
+    //     password: '4141',
+    //     port: 5432,
+    // });
+
     private client : Client;
     private user: string;
     private host: string;
     private database: string;
     private password: string;
     private port: number;
+
+    // async function connectdb() {
+    //     try{
+    //         await client.connect();
+    //         console.log('connected to db...');
+    //     } catch(err){
+    //         console.error(err);
+    //     }
+    // }
+
+    // async function readfromdb(){
+    //     try{
+    //         // const res = await client.query('select now()');
+    //         const res = await client.query('select * from category_wise_expense');
+    //         console.log('read query res: ' + JSON.stringify(res.rows, null, 2));
+    //         await client.end();
+    //     } catch(err) {
+    //         console.error(err);
+    //     }
+    // }
     
     constructor(user: string, host: string, database: string, password: string, port: number){
         this.user = user;
@@ -41,43 +69,26 @@ export class DatabaseManager {
     async insertExpense(expense: Expense){
         const query = 'INSERT INTO CATEGORY_WISE_EXPENSE(expense_month, travel, food, grocery, rent, house_help, electricity, leisure, investments,credits) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *';
 
-        const values = [expense.month, expense.travel, expense.food, expense.grocery, expense.rent, expense.house_help, expense.electricity, expense.leisure, expense.investments, expense.credits];
+        let values = [expense.month, expense.travel, expense.food, expense.grocery, expense.rent, expense.house_help, expense.electricity, expense.leisure, expense.investments, expense.credits];
 
         try{
             const res = await this.client.query(query, values);
-            console.log(JSON.stringify(res.rows, null, 2));
+            console.log('database entry: ' + JSON.stringify(res.rows, null, 2));
         } catch(err){
             console.error(err);
         }
     }
 
-    async getExpense(month: string, year: string){
-        const query = 'SELECT * FROM CATEGORY_WISE_EXPENSE WHERE EXPENSE_MONTH = $1 AND EXPENSE_YEAR = $2';
-        const values = [month, year];
+    deleteExpense(expense_id: number){
 
-        try{
-            const res = await this.client.query(query, values);
-            console.log('expense fetched.');
-            return res;
-        } catch(err){
-            console.error(err);
-        }
     }
 
-    async deleteExpense(month: string, year: string){
-        const query = 'DELETE FROM CATEGORY_WISE_EXPENSE WHERE EXPENSE_MONTH = $1 AND EXPENSE_YEAR = $2';
-        const values = [month, year];
+    getExpense(expense_id: number){
 
-        try{
-            const res = await this.client.query(query, values);
-            console.log('expense deleted: ' + res);
-        } catch(err){
-            console.error(err);
-        }
     }
 
-    async updateExpense(expense_id: number, expense: Expense){
-        
+    updateExpense(expense_id: number, expense: Expense){
+
     }
 
 }
