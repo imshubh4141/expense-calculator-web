@@ -38,6 +38,9 @@ function FileUploader() {
             const response:any = await axios.post('/upload', formData, {
                 headers: {'Content-Type': 'multipart/form-data'},
             });
+            
+            //TODO: validate response data structure
+
             setExpenses(response.data.expense);
             console.log(response.data.expense);
 

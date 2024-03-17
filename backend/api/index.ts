@@ -27,7 +27,7 @@ function validTransactionCheck(transaction : Transaction) : boolean{
 }
 
 const storage = multer.diskStorage({
-    destination: 'uploads',
+    destination: 'uploads/tmp',
     filename: (req,file,cb)=>{
         const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
         const fileName = uniqueSuffix + '.xls';
@@ -58,8 +58,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     console.log('Recieved file: ' + req.file.filename);
 
     //parsing logic here
-    const buf = readFileSync(path.join(__dirname, 'uploads', req.file.filename));
-    // const buf = readFileSync(`/Users/shubh/Desktop/repos/expense-calculator-web/backend/uploads/${req.file.filename}`);
+    const buf = readFileSync(path.join(__dirname, 'uploads/tmp', req.file.filename));
 
     const workbook = xlsx.read(buf, {type: "buffer"});
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -68,7 +67,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     transactions = transactions.filter(transaction => validTransactionCheck(transaction));
 
     //delete the file from the server after storing txns in a buffer
-    unlink(path.join(__dirname, 'uploads', req.file.filename), (err) => {
+    unlink(path.join(__dirname, 'uploads/tmp', req.file.filename), (err) => {
         if (err) throw err;
         console.log('successfully deleted ' + req.file?.filename);
     });
