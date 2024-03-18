@@ -42,7 +42,7 @@ const month = ["January","February","March","April","May","June","July","August"
 const app = express();
 const port = 3001;
 
-app.get('/checkAlive', (req: Request, res: Response) => {
+app.get('/', (req: Request, res: Response) => {
     console.log('check Alive');
     
     return res.status(200).json({
