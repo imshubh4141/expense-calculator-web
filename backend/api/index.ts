@@ -28,7 +28,7 @@ function validTransactionCheck(transaction : Transaction) : boolean{
 
 //TODO: make it so /tmp gets created in the root of backend
 const storage = multer.diskStorage({
-    destination: 'tmp/',
+    destination: '/tmp/',
     filename: (req,file,cb)=>{
         const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
         const fileName = uniqueSuffix + '.xls';
@@ -59,7 +59,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     console.log('Recieved file: ' + req.file.filename);
 
     //parsing logic here
-    const buf = readFileSync(path.join(__dirname, 'tmp/', req.file.filename));
+    const buf = readFileSync(path.join(__dirname, '/tmp/', req.file.filename));
 
     const workbook = xlsx.read(buf, {type: "buffer"});
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -68,7 +68,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     transactions = transactions.filter(transaction => validTransactionCheck(transaction));
 
     //delete the file from the server after storing txns in a buffer
-    unlink(path.join(__dirname, 'tmp/', req.file.filename), (err) => {
+    unlink(path.join(__dirname, '/tmp/', req.file.filename), (err) => {
         if (err) throw err;
         console.log('successfully deleted ' + req.file?.filename);
     });
