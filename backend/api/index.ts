@@ -8,6 +8,15 @@ import { Transaction } from '../interfaces/Transaction';
 import { log } from 'console';
 import { DatabaseManager } from '../database/DatabaseManager';
 
+/*
+Notes:
+
+Need to deploy the app such that the frontend files are served by the server in PROD
+
+Right now I'm able to do it in DEV, both running on the same port 3000
+
+*/
+
 function addXLSExtenstion(name : string) : string {
     const newName = name.split('.')[0] + '.xls';
     return newName;
@@ -26,9 +35,8 @@ function validTransactionCheck(transaction : Transaction) : boolean{
     return temp;
 }
 
-//TODO: make it so /tmp gets created in the root of backend
 const storage = multer.diskStorage({
-    destination: '/tmp/',
+    destination: 'upload/tmp/',//for dev ---> upload/tmp/, for prod --> /tmp/
     filename: (req,file,cb)=>{
         const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
         const fileName = uniqueSuffix + '.xls';
@@ -40,15 +48,24 @@ const upload = multer({storage: storage});
 const month = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const app = express();
-const port = 3001;
+const port = 3000;
+
+app.use(express.static('/Users/shubh/Desktop/repos/expense-calculator-web/build'));
 
 app.get('/', (req: Request, res: Response) => {
     console.log('check Alive');
     
-    return res.status(200).json({
-        message: 'I am alive',
-        port: port,
-    });
+    // return res.status(200).json({
+    //     message: 'I am alive',
+    //     port: port,
+    // });
+    // res.sendFile('/Users/shubh/Desktop/repos/expense-calculator-web/build/index.html');
+    res.sendFile(__dirname + '../../../build/index.html');
+
+
+    // __dirname -> backend/dist/api -->../../../build/index.html
+
+    
 });
 
 app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Response) => {

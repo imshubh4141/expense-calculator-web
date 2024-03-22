@@ -23,5 +23,5 @@ yarn-debug.log*
 yarn-error.log*
 
 #files
-backend/uploads
-backend/dist
+/backend/uploads
+/backend/dist
