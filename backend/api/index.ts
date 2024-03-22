@@ -60,7 +60,7 @@ app.get('/', (req: Request, res: Response) => {
     //     port: port,
     // });
     // res.sendFile('/Users/shubh/Desktop/repos/expense-calculator-web/build/index.html');
-    res.sendFile(__dirname + '../../../build/index.html');
+    res.sendFile('../../../build/index.html');
 
 
     // __dirname -> backend/dist/api -->../../../build/index.html
