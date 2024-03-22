@@ -36,7 +36,7 @@ function validTransactionCheck(transaction : Transaction) : boolean{
 }
 
 const storage = multer.diskStorage({
-    destination: 'upload/tmp/',//for dev ---> upload/tmp/, for prod --> /tmp/
+    destination: '/tmp/',//for dev ---> upload/tmp/, for prod --> /tmp/
     filename: (req,file,cb)=>{
         const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
         const fileName = uniqueSuffix + '.xls';
