@@ -13,7 +13,9 @@ Notes:
 
 Need to deploy the app such that the frontend files are served by the server in PROD
 
-Right now I'm able to do it in DEV, both running on the same port 3000
+deployed on same port but unable to server frontend from server in PROD
+
+need to change vercel configurations --- look at chatGPT last prompt
 
 */
 
@@ -36,7 +38,7 @@ function validTransactionCheck(transaction : Transaction) : boolean{
 }
 
 const storage = multer.diskStorage({
-    destination: '/tmp/',//for dev ---> upload/tmp/, for prod --> /tmp/
+    destination: 'upload/tmp/',//for dev ---> upload/tmp/, for prod --> /tmp/
     filename: (req,file,cb)=>{
         const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
         const fileName = uniqueSuffix + '.xls';
@@ -48,9 +50,11 @@ const upload = multer({storage: storage});
 const month = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(express.static('/Users/shubh/Desktop/repos/expense-calculator-web/build'));
+app.use(express.static(path.join(__dirname, 'build'))); //--> for prod
+app.use(express.static('/Users/shubh/Desktop/repos/expense-calculator-web/build')); //--> for dev
+
 
 app.get('/', (req: Request, res: Response) => {
     console.log('check Alive');
@@ -59,8 +63,8 @@ app.get('/', (req: Request, res: Response) => {
     //     message: 'I am alive',
     //     port: port,
     // });
-    // res.sendFile('/Users/shubh/Desktop/repos/expense-calculator-web/build/index.html');
-    res.sendFile('../../../build/index.html');
+    // res.sendFile('/Users/shubh/Desktop/repos/expense-calculator-web/build/index.html');// --> for DEV
+    return res.sendFile(path.join(__dirname, 'build', 'index.html')); // --> for PROD
 
 
     // __dirname -> backend/dist/api -->../../../build/index.html
@@ -76,7 +80,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     console.log('Recieved file: ' + req.file.filename);
 
     //parsing logic here
-    const buf = readFileSync(path.join(__dirname, '/tmp/', req.file.filename));
+    const buf = readFileSync(path.join(__dirname, 'upload/tmp/', req.file.filename));
 
     const workbook = xlsx.read(buf, {type: "buffer"});
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -85,7 +89,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     transactions = transactions.filter(transaction => validTransactionCheck(transaction));
 
     //delete the file from the server after storing txns in a buffer
-    unlink(path.join(__dirname, '/tmp/', req.file.filename), (err) => {
+    unlink(path.join(__dirname, 'upload/tmp/', req.file.filename), (err) => {
         if (err) throw err;
         console.log('successfully deleted ' + req.file?.filename);
     });
@@ -155,8 +159,8 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     });
 });
 
-app.listen(port, () => {
-    console.log(`Listening on port ${port}`);
+app.listen(PORT, () => {
+    console.log(`Listening on port ${PORT}`);
 });
 
 module.exports = app;
