@@ -1,8 +1,13 @@
 {
-    "rewrites": [
-        { 
-            "source": "/(.*)",
-            "destination": "backend/api"
-        }
+    "routes": [
+      {
+        "src": "/$1",
+        "dest": "backend/api"
+      },
+      {
+        "src": "/(.*)",
+        "dest": "build"
+      }
     ]
-}
+  }
+  

@@ -13,7 +13,7 @@ Notes:
 
 Need to deploy the app such that the frontend files are served by the server in PROD
 
-deployed on same port but unable to server frontend from server in PROD
+deployed on same port but unable to serve frontend from server in PROD
 
 need to change vercel configurations --- look at chatGPT last prompt
 
@@ -38,7 +38,7 @@ function validTransactionCheck(transaction : Transaction) : boolean{
 }
 
 const storage = multer.diskStorage({
-    destination: 'upload/tmp/',//for dev ---> upload/tmp/, for prod --> /tmp/
+    destination: '/tmp/',//for dev ---> upload/tmp/, for prod --> /tmp/
     filename: (req,file,cb)=>{
         const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
         const fileName = uniqueSuffix + '.xls';
@@ -53,7 +53,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, 'build'))); //--> for prod
-// app.use(express.static('/Users/shubh/Desktop/repos/expense-calculator-web/build')); //--> for dev
+// app.use(express.static('/Users/user/Desktop/repos/expense-calculator-web/build')); //--> for dev
 
 
 app.get('/', (req: Request, res: Response) => {
@@ -64,6 +64,7 @@ app.get('/', (req: Request, res: Response) => {
     //     port: port,
     // });
     // res.sendFile('/Users/shubh/Desktop/repos/expense-calculator-web/build/index.html');// --> for DEV
+    console.log('build directory: ' + __dirname + '/build/index.html');
     return res.sendFile(path.join(__dirname, 'build', 'index.html')); // --> for PROD
 
 
@@ -80,7 +81,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     console.log('Recieved file: ' + req.file.filename);
 
     //parsing logic here
-    const buf = readFileSync(path.join(__dirname, 'upload/tmp/', req.file.filename));
+    const buf = readFileSync(path.join(__dirname, '/tmp/', req.file.filename));
 
     const workbook = xlsx.read(buf, {type: "buffer"});
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -89,7 +90,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     transactions = transactions.filter(transaction => validTransactionCheck(transaction));
 
     //delete the file from the server after storing txns in a buffer
-    unlink(path.join(__dirname, 'upload/tmp/', req.file.filename), (err) => {
+    unlink(path.join(__dirname, '/tmp/', req.file.filename), (err) => {
         if (err) throw err;
         console.log('successfully deleted ' + req.file?.filename);
     });
