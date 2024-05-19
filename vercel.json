@@ -3,12 +3,12 @@
       {
         "src": "backend",
         "use": "@vercel/node",
-        "cmd": "yarn tsc"
+        "buildCommand": "yarn tsc"
       },
       {
         "src": "src",
         "use": "@vercel/react",
-        "cmd": "yarn build"
+        "buildCommand": "yarn build"
       }
     ]
 }
