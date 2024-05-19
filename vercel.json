@@ -2,14 +2,15 @@
     "builds": [
       {
         "src": "backend",
-        "use": "@vercel/node",
-        "buildCommand": "yarn tsc"
+        "use": "@vercel/node"
       },
       {
         "src": "src",
-        "use": "@vercel/react",
-        "buildCommand": "yarn build"
+        "use": "@vercel/react"
       }
-    ]
+    ],
+    
+    "buildCommand": "yarn build"
+    
 }
   
