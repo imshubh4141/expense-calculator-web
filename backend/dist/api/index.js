@@ -43,7 +43,7 @@ function validTransactionCheck(transaction) {
     return temp;
 }
 const storage = multer_1.default.diskStorage({
-    destination: 'upload/tmp/',
+    destination: '/tmp/',
     filename: (req, file, cb) => {
         const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
         const fileName = uniqueSuffix + '.xls';
@@ -74,13 +74,13 @@ app.post('/upload', upload.single('uploaded_file'), (req, res) => __awaiter(void
     }
     console.log('Recieved file: ' + req.file.filename);
     //parsing logic here
-    const buf = (0, fs_1.readFileSync)(path_1.default.join(__dirname, 'upload/tmp/', req.file.filename));
+    const buf = (0, fs_1.readFileSync)(path_1.default.join(__dirname, '/tmp/', req.file.filename));
     const workbook = xlsx_1.default.read(buf, { type: "buffer" });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     let transactions = xlsx_1.default.utils.sheet_to_json(worksheet);
     transactions = transactions.filter(transaction => validTransactionCheck(transaction));
     //delete the file from the server after storing txns in a buffer
-    (0, fs_1.unlink)(path_1.default.join(__dirname, 'upload/tmp/', req.file.filename), (err) => {
+    (0, fs_1.unlink)(path_1.default.join(__dirname, '/tmp/', req.file.filename), (err) => {
         var _a;
         if (err)
             throw err;
