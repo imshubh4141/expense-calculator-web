@@ -2,10 +2,10 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import multer from 'multer';
 import xlsx from 'xlsx';
+import cors from 'cors';
 import { readFileSync, unlink } from "fs";
 import { Expense } from '../interfaces/Expense';
 import { Transaction } from '../interfaces/Transaction';
-import { log } from 'console';
 import { DatabaseManager } from '../database/DatabaseManager';
 
 /*
@@ -14,8 +14,6 @@ Notes:
 Need to deploy the app such that the frontend files are served by the server in PROD
 
 deployed on same port but unable to serve frontend from server in PROD
-
-need to change vercel configurations --- look at chatGPT last prompt
 
 */
 
@@ -38,7 +36,7 @@ function validTransactionCheck(transaction : Transaction) : boolean{
 }
 
 const storage = multer.diskStorage({
-    destination: '/tmp/',//for dev ---> upload/tmp/, for prod --> /tmp/
+    destination: 'upload/tmp/',//for dev ---> upload/tmp/, for prod --> /tmp/
     filename: (req,file,cb)=>{
         const uniqueSuffix = file.originalname.split('.')[0] + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
         const fileName = uniqueSuffix + '.xls';
@@ -50,22 +48,23 @@ const upload = multer({storage: storage});
 const month = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3001;
 
-app.use(express.static(path.join(__dirname, 'build'))); //--> for prod
+// app.use(express.static(path.join(__dirname, 'build'))); //--> for prod
 // app.use(express.static('/Users/user/Desktop/repos/expense-calculator-web/build')); //--> for dev
 
+app.use(cors());
 
 app.get('/', (req: Request, res: Response) => {
     console.log('check Alive');
     
-    // return res.status(200).json({
-    //     message: 'I am alive',
-    //     port: port,
-    // });
+    return res.status(200).json({
+        message: 'I am alive',
+        port: PORT,
+    });
     // res.sendFile('/Users/shubh/Desktop/repos/expense-calculator-web/build/index.html');// --> for DEV
-    console.log('build directory: ' + __dirname + '/build/index.html');
-    return res.sendFile(path.join(__dirname, 'build', 'index.html')); // --> for PROD
+    // console.log('build directory: ' + __dirname + '/build/index.html');
+    // return res.sendFile(path.join(__dirname, 'build', 'index.html')); // --> for PROD
 
 
     // __dirname -> backend/dist/api -->../../../build/index.html
@@ -81,7 +80,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     console.log('Recieved file: ' + req.file.filename);
 
     //parsing logic here
-    const buf = readFileSync(path.join(__dirname, '/tmp/', req.file.filename));
+    const buf = readFileSync(path.join(__dirname, 'upload/tmp/', req.file.filename));
 
     const workbook = xlsx.read(buf, {type: "buffer"});
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -90,7 +89,7 @@ app.post('/upload', upload.single('uploaded_file'), async (req: Request, res: Re
     transactions = transactions.filter(transaction => validTransactionCheck(transaction));
 
     //delete the file from the server after storing txns in a buffer
-    unlink(path.join(__dirname, '/tmp/', req.file.filename), (err) => {
+    unlink(path.join(__dirname, 'upload/tmp/', req.file.filename), (err) => {
         if (err) throw err;
         console.log('successfully deleted ' + req.file?.filename);
     });
