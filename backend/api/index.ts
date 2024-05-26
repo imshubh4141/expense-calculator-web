@@ -48,7 +48,7 @@ const upload = multer({storage: storage});
 const month = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.port || 3001;
 
 // app.use(express.static(path.join(__dirname, 'build'))); //--> for prod
 // app.use(express.static('/Users/user/Desktop/repos/expense-calculator-web/build')); //--> for dev
