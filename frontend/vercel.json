@@ -1,7 +1,7 @@
 {
     "rewrites": [
       {
-        "source": "/upload",
+        "source": "/:path*",
         "destination": "https://expense-calculator-server.vercel.app/"
       }
     ]
