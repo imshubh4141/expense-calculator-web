@@ -2,7 +2,7 @@
     "rewrites": [
       {
         "source": "/:path*",
-        "destination": "https://expense-calculator-server-ivw9ehv9e-imshubh4141s-projects.vercel.app/"
+        "destination": "https://expense-calculator-server-ivw9ehv9e-imshubh4141s-projects.vercel.app/api/:path*"
       }
     ]
 }
