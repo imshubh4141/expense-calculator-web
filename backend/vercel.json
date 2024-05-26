@@ -1,13 +1,3 @@
 {
-    "routes": [
-      {
-        "src": "/$1",
-        "dest": "backend/api"
-      },
-      {
-        "src": "/(.*)",
-        "dest": "build"
-      }
-    ]
-  }
-  
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
+}
