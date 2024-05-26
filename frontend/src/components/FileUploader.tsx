@@ -35,7 +35,7 @@ function FileUploader() {
         formData.append('uploaded_file', file);
 
         try {
-            const response:any = await axios.post('https://expense-calculator-server.vercel.app/api/upload', formData, {
+            const response:any = await axios.post('https://expense-calculator-server.vercel.app/upload', formData, {
                 headers: {'Content-Type': 'multipart/form-data'},
             });
             
